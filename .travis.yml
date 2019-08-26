@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t codymarcus/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true codymarcus/react-test npm test
+
+after_success:
+  - docker build -t codymarcus/multi-client ./client
+  - docker build -t codymarcus/multi-nginx ./nginx
+  - docker build -t codymarcus/multi-server ./server
+  - docker build -t codymarcus/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take thoses images and push them to docker hub
+  - docker push codymarcus/multi-client
+  - docker push codymarcus/multi-nginx
+  - docker push codymarcus/multi-server
+  - docker push codymarcus/multi-worker
